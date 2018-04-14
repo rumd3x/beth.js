@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Beth.js Form Example</title>
+    <meta name="author" content="RUMD3X">
+    <meta name="description" content="Beth.js Example">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="../beth.min.js"></script>
+  </head>
+  <body>
+    <h2>Beth.js Form Example!</h2>
+    <h4>Look at this beth.js dynamic text: {{instance.text}}</h4>
+    <button id="btnGenText">Click me to generate new random text!</button>
+    <br><br>
+    <h4>Beth Dynamic Inputs!</h4>
+    Text Input <input type="text" beth-bind="instance.tests.string"><br>
+    String in the above input => {{instance.tests.string}}
+    <br>
+    <br>
+    Comboboxes! 
+    <select beth-bind="instance.tests.select" beth-change="instance.selectChanged(instance.tests.select)">
+      <option value="0">Zero</option>
+      <option value="1">One</option>
+      <option value="2">Two</option>
+    </select>
+    <br>
+    Selected input value => {{instance.tests.select}}
+    <br>
+    <br>
+    Radios!<br>
+    <input beth-bind="instance.tests.radio" type="radio" name="gender" value="male"> Male<br>
+    <input beth-bind="instance.tests.radio" type="radio" name="gender" value="female"> Female<br>
+    <input beth-bind="instance.tests.radio" type="radio" name="gender" value="other"> Other<br>
+    Selected input value => {{instance.tests.radio}}
+
+    <br>
+    <br>
+    <input beth-bind="instance.tests.checkbox" type="checkbox"> Checkboxes!
+    <br> Checkbox value => {{instance.tests.checkbox.toString()}}
+  </body>
+  <script src="MyTestModel.class.js"></script>
+  <script src="formcontroller.js"></script>
+</html>
