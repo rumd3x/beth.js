@@ -7,7 +7,7 @@
     <meta name="description" content="Beth.js Example">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="jquery-3.3.1.min.js"></script>
-    <script src="../beth.min.js"></script>
+    <script src="../beth.js"></script>
   </head>
   <body>
     <h2>Beth.js Form Example!</h2>
@@ -15,7 +15,7 @@
     <button id="btnGenText">Click me to generate new random text!</button>
     <br><br>
     <h4>Beth Dynamic Inputs!</h4>
-    Text Input <input type="text" beth-bind="instance.tests.string"><br>
+    Text Input <input type="text" beth-bind="instance.tests.string" beth-default="I was defined using the 'beth-default' directive!"><br>
     String in the above input => {{instance.tests.string}}
     <br>
     <br>
@@ -39,6 +39,8 @@
     <br>
     <input beth-bind="instance.tests.checkbox" type="checkbox"> Checkboxes!
     <br> Checkbox value => {{instance.tests.checkbox.toString()}}
+    <br>
+    <p beth-hide="!instance.tests.checkbox">This line will be hidden if the above checkbox is set to false.</p>
   </body>
   <script src="MyTestModel.class.js"></script>
   <script src="formcontroller.js"></script>
