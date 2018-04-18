@@ -29,14 +29,14 @@ beth-change
 beth-hide
 ```
 
-You can also override the default Beth update interval by setting a new integer value: (in milliseconds)
-```javascript
-Beth._refreshInterval = 70;
-```
-
 How do I programatically detect Beth was initalized sucessfully?
 ```javascript
 if (Beth._initialized) {
 	console.log("Beth is running...");
 }
+```
+
+You can also override the default Beth update interval by setting a new integer value: (in milliseconds)
+```javascript
+Beth._refreshInterval = 70;
 ```
