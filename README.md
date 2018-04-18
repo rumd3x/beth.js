@@ -36,7 +36,7 @@ Beth._refreshInterval = 70;
 
 How do I programatically detect Beth was initalized sucessfully?
 ```javascript
-	if (Beth._initialized) {
-		console.log("Beth is running...");
-	}
+if (Beth._initialized) {
+	console.log("Beth is running...");
+}
 ```
