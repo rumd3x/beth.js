@@ -1,5 +1,5 @@
 $(document, window, undefined).ready(function() {
-	Beth._refreshInterval = 15;
+	Beth._refreshInterval = 70;
 	Beth._init();
 });	
 
@@ -10,19 +10,23 @@ class Beth {
 	}
 
 	static _init() {
-		Beth._initialized = false;
+		Beth._initialized = false;		
+		Beth._initDynamicHtml();
+		Beth._initInputValues();
+		Beth._bindDirectives();
+		Beth._bindVariables();
+		Beth._initialized = true;
+	}
+
+	static _initDynamicHtml() {
 		Beth.binds = [];
 		var oldHtml = document.documentElement.innerHTML;
 		var vars = oldHtml.match(/\{\{.*\}\}/g);
 		for(var i = 0, length1 = vars.length; i < length1; i++) {			
 			var varvalue;
 			var varname = $.trim(Beth._extractTextBetween(vars[i], "{{", "}}"));
-			try {
-				varvalue = eval(varname);
-			} catch(e) {
-				varvalue = undefined;
-				console.warn("Beth Parsing Error:", e);
-			}
+			Beth._declareVar(varname, "''"); 
+			varvalue = eval(varname);
 			var newHtml = oldHtml;
 			if (varvalue !== undefined) {
 				Beth.binds.push(varname);
@@ -33,14 +37,12 @@ class Beth {
 			oldHtml = newHtml;
 		}
 		document.documentElement.innerHTML = newHtml;
-		Beth._initInputValues();
-		Beth._bindVariables();
 	}
 
 	static _bindVariables() {
 		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
 			var bethvar_name = $(this).attr('beth-bind');
-			if (Beth._isValidEval(bethvar_name)) {
+			if (Beth._isVarDefined(bethvar_name)) {
 				try {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).val()) {
@@ -55,7 +57,7 @@ class Beth {
 
 		$("input[beth-bind][type='radio']").each(function() {
 			var bethvar_name = $(this).attr('beth-bind');
-			if ($(this).is(':checked') && Beth._isValidEval(bethvar_name)) {
+			if ($(this).is(':checked') && Beth._isVarDefined(bethvar_name)) {
 				try {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).val()) {
@@ -70,7 +72,7 @@ class Beth {
 
 		$("input[beth-bind][type='checkbox']").each(function() {
 			var bethvar_name = $(this).attr('beth-bind');
-			if (Beth._isValidEval(bethvar_name)) {
+			if (Beth._isVarDefined(bethvar_name)) {
 				try {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).is(':checked')) {
@@ -86,17 +88,76 @@ class Beth {
 		$("beth").each(function() {
 			var newHtml = eval(Beth.binds[parseInt($(this).data('bind'))]);
 			if ($(this).html() != newHtml) {
-		 		$(this).html(newHtml);
+		 		$(this).html(unescape(newHtml));
 			}
 		});
 
 		setTimeout(function() {
 			Beth._bindVariables();
 		}, Beth._refreshInterval);
+	}
 
-		if (!Beth._initialized) { 
-			Beth._initialized = true; 
-		}
+	static _initInputValues() {
+		$("input[beth-default]:not([beth-bind])").each(function() {
+			try {
+				var bethvar_name = $(this).val(eval($(this).attr('beth-default')));
+			} catch(e) {
+				var bethvar_name = $(this).val($(this).attr('beth-default'));
+			}
+		});
+
+		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+			try {
+				var bethvar_name = $(this).attr('beth-bind');
+				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
+				$(this).val(unescape(eval($(this).attr('beth-bind'))));
+			} catch(e) {
+				$(this).removeAttr('beth-bind');
+				console.warn("Beth: Variable not defined", e);
+			}
+		});
+
+		$("input[beth-bind][type='radio']").each(function() {
+			try {
+				var bethvar_name = $(this).attr('beth-bind');
+				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
+				$(this).prop('checked', unescape(eval($(this).attr('beth-bind'))) == $(this).val());
+			} catch(e) {
+				$(this).removeAttr('beth-bind');
+				console.warn("Beth: Variable not defined", e);
+			}
+		});
+
+		$("input[beth-bind][type='checkbox']").each(function() {
+			try {
+				var bethvar_name = $(this).attr('beth-bind');
+				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
+				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);
+			} catch(e) {
+				$(this).removeAttr('beth-bind');
+				console.warn("Beth: Variable not defined", e);
+			}
+		});
+	}
+
+	static _bindDirectives() {
+		$("[beth-hide]").each(function() {
+			try {
+				var hide = eval($(this).attr('beth-hide'));
+				if (hide == true) {
+					$(this).hide();
+				} else {
+					$(this).show();					
+				}
+			} catch(e) {
+				$(this).removeAttr('beth-hide');
+				console.warn("Beth: Hide eval error", e);
+			}
+		});
+
+		setTimeout(function() {
+			Beth._bindDirectives();
+		}, Beth._refreshInterval);
 	}
 
 	static _triggerChangeEvent(selector) {
@@ -106,43 +167,53 @@ class Beth {
 		}
 	}
 
-	static _isValidEval(varname) {
+	static _declareVar(varname, varvalue = null) {
+		if (!Beth._isVarDefined(varname)) {
+			varvalue = Beth._parseValue(varvalue);
+			eval("window."+varname+'="'+escape(varvalue)+'";');
+			if (eval("window."+varname) == "null" || eval("window."+varname) == "undefined") {
+				eval("window."+varname+'="";');
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	static _isVarDefined(varname) {
 		var valid = true;
 		try {
-			valid = eval("typeof instance.tests.checkbox.toString() !== 'undefined'")
+			valid = eval("typeof "+varname+" !== 'undefined'");
+			if (valid) {
+				var varvalue = eval(varname);
+				if (varvalue === "") {
+					if (Beth.binds.indexOf(varname) != -1) {
+						valid = false;
+					} else {
+						valid = true;
+					}
+				} else {
+					valid = true;
+				}
+			}
 		} catch(e) {
 			valid = false;
 		}
 		return valid;
 	}
 
-	static _initInputValues() {
-		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+	static _parseValue(varvalue) {
+		if (varvalue !== undefined) {
 			try {
-				$(this).val(eval($(this).attr('beth-bind')));
+				varvalue = eval(varvalue);
 			} catch(e) {
-				$(this).removeAttr('beth-bind');
-				console.warn("Beth: Variable not defined", e);
+				varvalue = String(varvalue);
 			}
-		});
+		} else {
+			varvalue = "";
+		}
 
-		$("input[beth-bind][type='radio']").each(function() {
-			try {
-				$(this).prop('checked', eval($(this).attr('beth-bind')) == $(this).val());
-			} catch(e) {
-				$(this).removeAttr('beth-bind');
-				console.warn("Beth: Variable not defined", e);
-			}
-		});
-
-		$("input[beth-bind][type='checkbox']").each(function() {
-			try {
-				$(this).prop('checked', $(this).attr('beth-bind'));
-			} catch(e) {
-				$(this).removeAttr('beth-bind');
-				console.warn("Beth: Variable not defined", e);
-			}
-		});
+		return varvalue;
 	}
 
 	static _extractTextBetween(subject, start, end) {
