@@ -40,7 +40,11 @@
     <input beth-bind="instance.tests.checkbox" type="checkbox"> Checkboxes!
     <br> Checkbox value => {{instance.tests.checkbox.toString()}}
     <br>
-    <p beth-hide="!instance.tests.checkbox">This line will be hidden if the above checkbox is set to false.</p>
+    <p beth-hide="!instance.tests.checkbox">This line will be hidden if the above checkbox is <b>NOT checked</b>.</p>
+    <br>
+    The textarea below will be disabled if the checkbox above is <b>CHECKED</b>.
+    <br>
+    <textarea beth-disable="instance.tests.checkbox" cols="40" rows="5"></textarea>
   </body>
   <script src="MyTestModel.class.js"></script>
   <script src="formcontroller.js"></script>
