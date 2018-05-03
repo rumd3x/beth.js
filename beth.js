@@ -27,15 +27,16 @@ class Beth {
 		}
 		for(var i = 0, length1 = matches.length; i < length1; i++) {			
 			var varvalue;
-			var varname = $.trim(Beth._extractTextBetween(vars[i], "{{", "}}"));
+			var current_matched_var = matches[i];
+			var varname = $.trim(Beth._extractTextBetween(current_matched_var, "{{", "}}"));
 			Beth._declareVar(varname, "''"); 
 			varvalue = eval(varname);
 			var newHtml = oldHtml;
 			if (varvalue !== undefined) {
 				Beth.binds.push(varname);
-				newHtml = oldHtml.replace(vars[i], '<beth data-bind="'+ (Beth.binds.length-1) +'">'+varvalue+"</beth>");
+				newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+varvalue+"</beth>");
 			} else {
-				newHtml = oldHtml.replace(vars[i], '');
+				newHtml = oldHtml.replace(current_matched_var, '');
 			}
 			oldHtml = newHtml;
 		}
