@@ -21,8 +21,11 @@ class Beth {
 	static _initDynamicHtml() {
 		Beth.binds = [];
 		var oldHtml = document.documentElement.innerHTML;
-		var vars = oldHtml.match(/\{\{.*\}\}/g);
-		for(var i = 0, length1 = vars.length; i < length1; i++) {			
+		var matches = oldHtml.match(/\{\{.*\}\}/g);
+		if (matches == null) {
+			matches = [];
+		}
+		for(var i = 0, length1 = matches.length; i < length1; i++) {			
 			var varvalue;
 			var varname = $.trim(Beth._extractTextBetween(vars[i], "{{", "}}"));
 			Beth._declareVar(varname, "''"); 
@@ -40,7 +43,7 @@ class Beth {
 	}
 
 	static _bindVariables() {
-		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
 			var bethvar_name = $(this).attr('beth-bind');
 			if (Beth._isVarDefined(bethvar_name)) {
 				try {
@@ -98,7 +101,7 @@ class Beth {
 	}
 
 	static _initInputValues() {
-		$("input[beth-default]:not([beth-bind])").each(function() {
+		$("textarea[beth-default]:not([beth-bind]), input[beth-default]:not([beth-bind]), select[beth-default]:not([beth-bind])").each(function() {
 			try {
 				var bethvar_name = $(this).val(eval($(this).attr('beth-default')));
 			} catch(e) {
@@ -106,7 +109,7 @@ class Beth {
 			}
 		});
 
-		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
 			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
@@ -153,6 +156,32 @@ class Beth {
 				$(this).removeAttr('beth-hide');
 				console.warn("Beth: Hide eval error", e);
 			}
+		});
+
+		$("[beth-disable]").each(function() {
+			try {
+				var disable = eval($(this).attr('beth-disable'));
+				if (disable == true) {
+					$(this).prop('disabled', true);
+				} else {
+					$(this).prop('disabled', false);				
+				}
+			} catch(e) {
+				$(this).removeAttr('beth-disable');
+				console.warn("Beth: Hide eval error", e);
+			}
+		});
+
+		$("[beth-if]").each(function() {
+			try {
+				var result = eval($(this).attr('beth-if'));
+				if (result != true) {
+					$(this).remove();				
+				}
+			} catch(e) {
+				console.warn("Beth: Hide eval error", e);
+			}
+			$(this).removeAttr('beth-if');
 		});
 
 		setTimeout(function() {

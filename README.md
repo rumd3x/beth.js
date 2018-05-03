@@ -26,6 +26,9 @@ The following directives are available: (See examples for usage)
 beth-bind
 beth-default
 beth-change
+
+beth-if
+beth-disable
 beth-hide
 ```
 
