@@ -21,18 +21,23 @@ class Beth {
 	static _initDynamicHtml() {
 		Beth.binds = [];
 		var oldHtml = document.documentElement.innerHTML;
-		var vars = oldHtml.match(/\{\{.*\}\}/g);
-		for(var i = 0, length1 = vars.length; i < length1; i++) {			
+		var newHtml = oldHtml;
+		var matches = oldHtml.match(/\{\{.*\}\}/g);
+		if (matches == null) {
+			matches = [];
+		}
+		for(var i = 0, length1 = matches.length; i < length1; i++) {			
 			var varvalue;
-			var varname = $.trim(Beth._extractTextBetween(vars[i], "{{", "}}"));
+			var current_matched_var = matches[i];
+			var varname = $.trim(Beth._extractTextBetween(current_matched_var, "{{", "}}"));
 			Beth._declareVar(varname, "''"); 
 			varvalue = eval(varname);
-			var newHtml = oldHtml;
+			newHtml = oldHtml;
 			if (varvalue !== undefined) {
 				Beth.binds.push(varname);
-				newHtml = oldHtml.replace(vars[i], '<beth data-bind="'+ (Beth.binds.length-1) +'">'+varvalue+"</beth>");
+				newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+varvalue+"</beth>");
 			} else {
-				newHtml = oldHtml.replace(vars[i], '');
+				newHtml = oldHtml.replace(current_matched_var, '');
 			}
 			oldHtml = newHtml;
 		}
@@ -40,7 +45,7 @@ class Beth {
 	}
 
 	static _bindVariables() {
-		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
 			var bethvar_name = $(this).attr('beth-bind');
 			if (Beth._isVarDefined(bethvar_name)) {
 				try {
@@ -98,7 +103,7 @@ class Beth {
 	}
 
 	static _initInputValues() {
-		$("input[beth-default]:not([beth-bind])").each(function() {
+		$("textarea[beth-default]:not([beth-bind]), input[beth-default]:not([beth-bind]), select[beth-default]:not([beth-bind])").each(function() {
 			try {
 				var bethvar_name = $(this).val(eval($(this).attr('beth-default')));
 			} catch(e) {
@@ -106,7 +111,7 @@ class Beth {
 			}
 		});
 
-		$("input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
+		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
 			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
@@ -133,6 +138,7 @@ class Beth {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
 				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);
+				
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -155,9 +161,46 @@ class Beth {
 			}
 		});
 
+		$("[beth-disable]").each(function() {
+			try {
+				var disable = eval($(this).attr('beth-disable'));
+				if (disable == true) {
+					$(this).prop('disabled', true);
+				} else {
+					$(this).prop('disabled', false);				
+				}
+			} catch(e) {
+				$(this).removeAttr('beth-disable');
+				console.warn("Beth: Hide eval error", e);
+			}
+		});
+
+		$("[beth-if]").each(function() {
+			try {
+				var result = eval($(this).attr('beth-if'));
+				if (result != true) {
+					$(this).remove();				
+				}
+			} catch(e) {
+				console.warn("Beth: Hide eval error", e);
+			}
+			$(this).removeAttr('beth-if');
+		});
+
 		setTimeout(function() {
 			Beth._bindDirectives();
 		}, Beth._refreshInterval);
+	}
+
+	static _watchVar(varname) {
+		window.watch(varname, function(param, oldVal, newVal) {
+			$("[beth-bind='"+varname+"']").val(unescape(newVal));
+			window.unwatch(param);
+			if (eval(varname) !== newVal) {
+				eval("window."+varname+'="'+escape(newVal)+'";');
+			}
+			Beth._watchVar(param);
+		});
 	}
 
 	static _triggerChangeEvent(selector) {
@@ -174,6 +217,7 @@ class Beth {
 			if (eval("window."+varname) == "null" || eval("window."+varname) == "undefined") {
 				eval("window."+varname+'="";');
 			}
+			Beth._watchVar(varname);
 			return true;
 		} else {
 			return false;
@@ -225,4 +269,60 @@ class Beth {
 	    }
 	}
 
+}
+
+
+/*
+ * object.watch polyfill
+ *
+ * 2012-04-03
+ *
+ * By Eli Grey, http://eligrey.com
+ * Public Domain.
+ * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+ */
+
+// object.watch
+if (!Object.prototype.watch) {
+	Object.defineProperty(Object.prototype, "watch", {
+		  enumerable: false
+		, configurable: true
+		, writable: false
+		, value: function (prop, handler) {
+			var
+			  oldval = this[prop]
+			, newval = oldval
+			, getter = function () {
+				return newval;
+			}
+			, setter = function (val) {
+				oldval = newval;
+				return newval = handler.call(this, prop, oldval, val);
+			}
+			;
+			
+			if (delete this[prop]) { // can't watch constants
+				Object.defineProperty(this, prop, {
+					  get: getter
+					, set: setter
+					, enumerable: true
+					, configurable: true
+				});
+			}
+		}
+	});
+}
+
+// object.unwatch
+if (!Object.prototype.unwatch) {
+	Object.defineProperty(Object.prototype, "unwatch", {
+		  enumerable: false
+		, configurable: true
+		, writable: false
+		, value: function (prop) {
+			var val = this[prop];
+			delete this[prop]; // remove accessors
+			this[prop] = val;
+		}
+	});
 }
