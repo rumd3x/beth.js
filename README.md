@@ -26,5 +26,20 @@ The following directives are available: (See examples for usage)
 beth-bind
 beth-default
 beth-change
+
+beth-if
+beth-disable
 beth-hide
+```
+
+How do I programatically detect Beth was initalized sucessfully?
+```javascript
+if (Beth._initialized) {
+	console.log("Beth is running...");
+}
+```
+
+You can also override the default Beth update interval by setting a new integer value: (in milliseconds)
+```javascript
+Beth._refreshInterval = 70;
 ```
