@@ -38,7 +38,8 @@
     <br>
     <br>
     <input beth-bind="instance.tests.checkbox" type="checkbox"> Checkboxes!
-    <br> Checkbox value => {{instance.tests.checkbox.toString()}}
+    <br> Checkbox value => {{instance.tests.checkbox.toString()}} <br>
+    The checkbox is currently => {{instance.tests.checkbox ? 'CHECKED!' : '<b>NOT</b> Checked!' }}
     <br>
     <p beth-hide="!instance.tests.checkbox">This line will be hidden if the above checkbox is <b>NOT checked</b>.</p>
     <br>
