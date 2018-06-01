@@ -30,14 +30,19 @@ class Beth {
 			var varvalue;
 			var current_matched_var = matches[i];
 			var varname = $.trim(Beth._extractTextBetween(current_matched_var, "{{", "}}"));
-			Beth._declareVar(varname, "''"); 
-			varvalue = eval(varname);
+			varvalue = Beth._parseValue(varname);
 			newHtml = oldHtml;
 			if (varvalue !== undefined) {
-				Beth.binds.push(varname);
-				newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+varvalue+"</beth>");
+				Beth.binds.push(varname);				
+				newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+Beth._unescapeReal(varvalue)+"</beth>");
 			} else {
-				newHtml = oldHtml.replace(current_matched_var, '');
+				if ($('[beth-bind="'+varname+'"][beth-default]').length > 0) {
+					Beth._declareVar(varname, $('[beth-bind="'+varname+'"][beth-default]').first().attr('beth-default'));
+					Beth.binds.push(varname);
+					newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+Beth._unescapeReal($('[beth-bind="'+varname+'"][beth-default]').first().attr('beth-default'))+"</beth>");
+				} else {
+					newHtml = oldHtml.replace(current_matched_var, '');
+				}
 			}
 			oldHtml = newHtml;
 		}
@@ -52,7 +57,7 @@ class Beth {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).val()) {
 						eval(bethvar_name+' = $(this).val()');
-						Beth._triggerChangeEvent($(this));
+						Beth._triggerEvent($(this), 'change');
 					}
 				} catch(e) {
 					console.warn("Beth: Variable not defined", e);
@@ -67,7 +72,7 @@ class Beth {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).val()) {
 						eval(bethvar_name+' = $(this).val()');
-						Beth._triggerChangeEvent($(this));
+						Beth._triggerEvent($(this), 'change');
 					}
 				} catch(e) {
 					console.warn("Beth: Variable not defined", e);
@@ -82,7 +87,7 @@ class Beth {
 					var bethvar_value = eval(bethvar_name);
 					if (bethvar_value != $(this).is(':checked')) {
 						eval(bethvar_name+" = $(this).is(':checked')");
-						Beth._triggerChangeEvent($(this));
+						Beth._triggerEvent($(this), 'change');
 					}
 				} catch(e) {
 					console.warn("Beth: Variable not defined", e);
@@ -93,7 +98,7 @@ class Beth {
 		$("beth").each(function() {
 			var newHtml = eval(Beth.binds[parseInt($(this).data('bind'))]);
 			if ($(this).html() != newHtml) {
-		 		$(this).html(unescape(newHtml));
+		 		$(this).html(Beth._unescapeReal(newHtml));
 			}
 		});
 
@@ -112,10 +117,10 @@ class Beth {
 		});
 
 		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
-			try {
+			try {				
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
-				$(this).val(unescape(eval($(this).attr('beth-bind'))));
+				$(this).val(Beth._unescapeReal(eval($(this).attr('beth-bind'))));				
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -126,7 +131,7 @@ class Beth {
 			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
-				$(this).prop('checked', unescape(eval($(this).attr('beth-bind'))) == $(this).val());
+				$(this).prop('checked', Beth._unescapeReal(eval($(this).attr('beth-bind'))) == $(this).val());
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -137,8 +142,7 @@ class Beth {
 			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
-				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);
-				
+				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);				
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -192,45 +196,80 @@ class Beth {
 		}, Beth._refreshInterval);
 	}
 
-	static _watchVar(varname) {
-		window.watch(varname, function(param, oldVal, newVal) {
-			$("[beth-bind='"+varname+"']").val(unescape(newVal));
-			window.unwatch(param);
-			if (eval(varname) !== newVal) {
-				eval("window."+varname+'="'+escape(newVal)+'";');
+	
+	static _watchVar(varname) {		
+		if (varname.indexOf('.') > -1) {
+			var varname_arr = varname.split('.');
+			var prop = varname_arr.pop();
+			var obj = varname_arr.join('.');
+			var realObj = eval(obj);
+		} else {
+			var prop = varname;
+			var realObj = window;
+		}	
+
+		realObj.watch(prop, function(param, oldVal, newVal) {			
+			realObj.unwatch(param);
+			console.log("[beth-bind='"+varname+"']");
+			
+			$("[beth-bind='"+varname+"']").each(function() {
+				if ($(this).prop('type') == 'radio') {
+					$(this).prop('checked', newVal == $(this).val());
+				} else if ($(this).prop('type') == 'checkbox') {
+					$(this).prop('checked', newVal);
+				} else {
+					$(this).val(Beth._unescapeReal(newVal)).change();
+				}
+			});
+			if (realObj[prop] != newVal) {
+				realObj[prop] = newVal;
 			}
-			Beth._watchVar(param);
+			setTimeout(function() {
+				Beth._watchVar(varname);
+			}, Beth._refreshInterval);
 		});
 	}
-
-	static _triggerChangeEvent(selector) {
-		var callback = selector.attr('beth-change');
+	
+	static _triggerEvent(selector, event) {
+		var callback = selector.attr('beth-'+event);
 		if (callback !== undefined && Beth._initialized) {
 			eval(callback);
 		}
 	}
 
-	static _declareVar(varname, varvalue = null) {
+	static _unescapeReal(escape) {
+		var escaped = escape;
+		while (escaped !== unescape(escaped)) {
+			escaped = unescape(escaped);						
+		}
+		return escaped;
+	}
+	
+	static _declareVar(varname, varvalue = null) {	
+		Beth._watchVar(varname);
 		if (!Beth._isVarDefined(varname)) {
 			varvalue = Beth._parseValue(varvalue);
-			eval("window."+varname+'="'+escape(varvalue)+'";');
-			if (eval("window."+varname) == "null" || eval("window."+varname) == "undefined") {
-				eval("window."+varname+'="";');
+			try {
+				eval("window."+varname+'="'+escape(varvalue)+'";');
+				if (eval("window."+varname) == "null" || eval("window."+varname) == "undefined") {
+					eval("window."+varname+'="";');
+				}
+				return true;
+			} catch (e) {
+				return false;
 			}
-			Beth._watchVar(varname);
-			return true;
 		} else {
 			return false;
 		}
 	}
-
+	
 	static _isVarDefined(varname) {
 		var valid = true;
 		try {
 			valid = eval("typeof "+varname+" !== 'undefined'");
 			if (valid) {
 				var varvalue = eval(varname);
-				if (varvalue === "") {
+				if (varvalue === undefined) {
 					if (Beth.binds.indexOf(varname) != -1) {
 						valid = false;
 					} else {
@@ -284,45 +323,45 @@ class Beth {
 
 // object.watch
 if (!Object.prototype.watch) {
-	Object.defineProperty(Object.prototype, "watch", {
-		  enumerable: false
-		, configurable: true
-		, writable: false
-		, value: function (prop, handler) {
-			var
-			  oldval = this[prop]
-			, newval = oldval
-			, getter = function () {
-				return newval;
-			}
-			, setter = function (val) {
-				oldval = newval;
-				return newval = handler.call(this, prop, oldval, val);
-			}
-			;
-			
+    Object.defineProperty(Object.prototype, "watch", {
+        enumerable: false,
+        configurable: true,
+        writable: false,
+        value: function(prop, handler) {
+            var
+                oldval = this[prop],
+                newval = oldval,
+                getter = function() {
+                    return newval;
+                },
+                setter = function(val) {
+                    oldval = newval;
+                    return newval = handler.call(this, prop, oldval, val);
+                };
+
 			if (delete this[prop]) { // can't watch constants
-				Object.defineProperty(this, prop, {
-					  get: getter
-					, set: setter
-					, enumerable: true
-					, configurable: true
-				});
-			}
-		}
-	});
+			
+                Object.defineProperty(this, prop, {
+                    get: getter,
+                    set: setter,
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+        }
+    });
 }
 
 // object.unwatch
 if (!Object.prototype.unwatch) {
-	Object.defineProperty(Object.prototype, "unwatch", {
-		  enumerable: false
-		, configurable: true
-		, writable: false
-		, value: function (prop) {
-			var val = this[prop];
-			delete this[prop]; // remove accessors
-			this[prop] = val;
-		}
-	});
+    Object.defineProperty(Object.prototype, "unwatch", {
+        enumerable: false,
+        configurable: true,
+        writable: false,
+        value: function(prop) {
+            var val = this[prop];
+            delete this[prop]; // remove accessors
+            this[prop] = val;
+        }
+    });
 }
