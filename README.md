@@ -17,19 +17,20 @@ Download the beth.js or beth.min.js file and include in your page.
 
 To display a value that is dinamically updated on your page just put an expression on your HTML page inside double brackets like so:
 ```
-{{expression}}
+{{ expression }}
 ```
 
 BethJS also interacts directly with your inputs and other DOM elements.
-The following directives are available: (See examples for usage)
+The following directives are available: (See in the example for usage, they're all simple and straightforward)
 ```
 beth-bind
-beth-default
 beth-change
-
-beth-if
+beth-click
+beth-default
 beth-disable
+beth-each
 beth-hide
+beth-if
 ```
 
 How do I programatically detect Beth was initalized sucessfully?
