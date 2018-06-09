@@ -11,9 +11,10 @@ class Beth {
 
 	static _init() {
 		Beth._initialized = false;		
+		Beth.loops = {};
 		Beth._initDynamicHtml();
-		Beth._initInputValues();
 		Beth._bindDirectives();
+		Beth._initInputValues();
 		Beth._bindVariables();
 		Beth._initialized = true;
 	}
@@ -96,7 +97,11 @@ class Beth {
 		});
 
 		$("beth").each(function() {
-			var newHtml = eval(Beth.binds[parseInt($(this).data('bind'))]);
+			try {
+				var newHtml = eval(Beth.binds[parseInt($(this).data('bind'))]);
+			} catch (e) {
+				var newHtml = '';
+			}
 			if ($(this).html() != newHtml) {
 		 		$(this).html(Beth._unescapeReal(newHtml));
 			}
@@ -161,7 +166,7 @@ class Beth {
 				}
 			} catch(e) {
 				$(this).removeAttr('beth-hide');
-				console.warn("Beth: Hide eval error", e);
+				console.warn("Beth: Invalid expression inside 'Hide' directive", e);
 			}
 		});
 
@@ -175,7 +180,7 @@ class Beth {
 				}
 			} catch(e) {
 				$(this).removeAttr('beth-disable');
-				console.warn("Beth: Hide eval error", e);
+				console.warn("Beth: Invalid expression inside 'Disable' directive", e);
 			}
 		});
 
@@ -186,9 +191,71 @@ class Beth {
 					$(this).remove();				
 				}
 			} catch(e) {
-				console.warn("Beth: Hide eval error", e);
+				console.warn("Beth: Invalid expression inside 'If' directive", e);
 			}
 			$(this).removeAttr('beth-if');
+		});
+		
+		$("[beth-click]").each(function() {
+			$(this).off('click');
+			$(this).on('click', function() {
+				Beth._triggerEvent($(this), 'click');
+			});
+		});
+		
+		$("[beth-each]").each(function() {		
+			var newLoop = false;
+			if ($(this).attr('beth-id') === undefined) {
+				do {
+					var uniqueId = Beth._makeId();
+				} while ($("[beth-id="+uniqueId+"]").length > 0);
+				$(this).attr('beth-id', uniqueId);
+				var newLoop = true;
+			}
+			try {
+				var uniqueId = $(this).attr('beth-id');
+				var expression = $(this).attr('beth-each');
+				var exploded = expression.split("=>");
+				var loopVarName = exploded[1].trim();
+				var source = eval(exploded[0].trim());
+				var match = false;
+				if (newLoop) {								
+					Beth.loops[uniqueId] = jQuery.extend(true, [], source);
+				} else {		
+					if (JSON.stringify(Beth.loops[uniqueId]) === JSON.stringify(source)) {
+						match = true;
+					} else {
+						Beth.loops[uniqueId] = jQuery.extend(true, [], source);
+					}
+				}				
+				if (!match) {					
+					if ($(this).parent().prop('tagName') != "BETH-IT") {
+						$(this).wrap('<beth-it></beth-it>');
+					}
+					$("[beth-loop-id='"+uniqueId+"']").remove();
+					for (let index = 0; index < source.length; index++) {
+						const element = source[index];
+						var clone = $(this).clone().removeAttr('beth-each').removeAttr('beth-id').attr('beth-loop-id', uniqueId).unwrap();
+						var cloneHTML = clone.prop('outerHTML');
+						var newHtml = cloneHTML.replace(/\{(.*?)\$index(.*?)\}/g, index);
+						var matches = newHtml.match(eval('/\{(.*?)\\'+loopVarName+'(.*?)\}/g'));							
+						if (matches === null) {
+							matches = [];
+						}					
+						for (let j = 0; j < matches.length; j++) {
+							const curr_match = matches[j];			
+							var realVar = Beth._extractTextBetween(curr_match, '{', '}');
+							realVar = realVar.replace(loopVarName, 'element');		
+							newHtml = newHtml.replace(curr_match, eval(realVar));
+						}	
+						clone.remove();
+						$(this).parent().hide().before(newHtml);
+					}
+				}
+			} catch (e) {
+				$(this).remove();
+				console.warn("Beth: Invalid expression inside 'Each' directive", e);				
+			}
 		});
 
 		setTimeout(function() {
@@ -196,6 +263,15 @@ class Beth {
 		}, Beth._refreshInterval);
 	}
 
+	static _makeId() {
+		var text = "";
+		var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+		for (var i = 0; i < 5; i++)
+			text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+		return text;
+	}
 	
 	static _watchVar(varname) {		
 		if (varname.indexOf('.') > -1) {
@@ -209,9 +285,7 @@ class Beth {
 		}	
 
 		realObj.watch(prop, function(param, oldVal, newVal) {			
-			realObj.unwatch(param);
-			console.log("[beth-bind='"+varname+"']");
-			
+			realObj.unwatch(param);			
 			$("[beth-bind='"+varname+"']").each(function() {
 				if ($(this).prop('type') == 'radio') {
 					$(this).prop('checked', newVal == $(this).val());
@@ -220,6 +294,7 @@ class Beth {
 				} else {
 					$(this).val(Beth._unescapeReal(newVal)).change();
 				}
+				// Beth._triggerEvent($(this), 'change'); // Deixei aqui pra lembrar q dá ruim se por
 			});
 			if (realObj[prop] != newVal) {
 				realObj[prop] = newVal;
@@ -233,7 +308,11 @@ class Beth {
 	static _triggerEvent(selector, event) {
 		var callback = selector.attr('beth-'+event);
 		if (callback !== undefined && Beth._initialized) {
-			eval(callback);
+			try {
+				eval(callback);
+			} catch (e) {
+				console.error("Beth: Invalid Statement", e);
+			}
 		}
 	}
 
