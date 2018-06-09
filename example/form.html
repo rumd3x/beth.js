@@ -21,9 +21,7 @@
     <br>
     Comboboxes! 
     <select beth-bind="instance.tests.select" beth-change="instance.selectChanged(instance.tests.select)">
-      <option value="0">Zero</option>
-      <option value="1">One</option>
-      <option value="2">Two</option>
+      <option beth-each="instance.tests.options => $value" value="{$value.value}">{$value.text}</option>
     </select>
     <br>
     Selected input value => {{instance.tests.select}}
@@ -46,6 +44,10 @@
     The textarea below will be disabled if the checkbox above is <b>CHECKED</b>.
     <br>
     <textarea beth-disable="instance.tests.checkbox" cols="40" rows="5"></textarea>
+
+    <div style="border: 1px solid darkgreen; background-color: darkseagreen; width: 30%; height: 5vh" beth-click="alert('You clicked on the div!')">
+      Click this div!
+    </div>
   </body>
   <script src="MyTestModel.class.js"></script>
   <script src="formcontroller.js"></script>
