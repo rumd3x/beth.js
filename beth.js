@@ -202,6 +202,20 @@ class Beth {
 				Beth._triggerEvent($(this), 'click');
 			});
 		});
+
+		$("[beth-class]").each(function() {
+			try {
+				var added_classes = $(this).attr('beth-added-classes');
+				var new_classes = eval($(this).attr('beth-class'));
+				if (added_classes !== new_classes) {
+					$(this).removeClass(added_classes);
+					$(this).addClass(new_classes);
+					$(this).attr('beth-added-classes', new_classes);
+				}
+			} catch (e) {
+				console.warn("Beth: Invalid expression inside 'Class' directive", e);
+			}
+		})
 		
 		$("[beth-each]").each(function() {		
 			var newLoop = false;

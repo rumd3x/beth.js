@@ -25,6 +25,7 @@ The following directives are available: (See in the example for usage, they're a
 ```
 beth-bind
 beth-change
+beth-class
 beth-click
 beth-default
 beth-disable
