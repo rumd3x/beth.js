@@ -1,5 +1,5 @@
 # beth.js
-This jQuery library implements angular-like variable binding for your views.
+This JQuery based micro-framework implements "angular-like" utilities for your views.
 
 ## What's the point of this?
 If you always used jQuery to manipulate the DOM and can do anything with it, but knows how bad can it be, this is for you.
