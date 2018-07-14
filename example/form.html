@@ -34,7 +34,10 @@
     <input beth-bind="instance.tests.radio" type="radio" name="gender" value="female"> Female<br>
     <input beth-bind="instance.tests.radio" type="radio" name="gender" value="other"> Other<br>
     Selected input value => <span class="border" beth-class="instance.tests.radio === 'male' ? 'blue-text border-primary' : (instance.tests.radio === 'female' ? 'pink-text border-secondary' : 'grey-text')">{{instance.tests.radio}}</span>
-
+    <br>
+    <br>
+    <p beth-inside="string_inside"></p>
+    <p beth-html-inside="string_inside"></p>
     <br>
     <br>
     <input beth-bind="instance.tests.checkbox" type="checkbox"> Checkboxes!

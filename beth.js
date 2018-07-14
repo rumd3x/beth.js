@@ -203,6 +203,31 @@ class Beth {
 			});
 		});
 
+		$("[beth-inside]").each(function() {
+			let beth_inside_string_var = "";
+			try {
+				beth_inside_string_var = Beth._parseValue($(this).attr('beth-inside'));
+			} catch (e) {
+				console.warn("Beth: Invalid expression inside 'Inside' directive", e);
+			}
+			if ($(this).text() !== beth_inside_string_var) {
+				$(this).text(beth_inside_string_var);
+			}
+		});
+
+		$("[beth-html-inside]").each(function() {
+			let beth_inside_string_var = "";
+			try {
+				beth_inside_string_var = Beth._parseValue($(this).attr('beth-html-inside'));
+			} catch (e) {
+				console.warn("Beth: Invalid expression inside 'Html-inside' directive", e);
+			}
+			
+			if ($(this).html() !== beth_inside_string_var) {
+				$(this).html(beth_inside_string_var);
+			}
+		});
+
 		$("[beth-class]").each(function() {
 			try {
 				var added_classes = $(this).attr('beth-added-classes');

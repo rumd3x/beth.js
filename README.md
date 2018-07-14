@@ -32,6 +32,8 @@ beth-disable
 beth-each
 beth-hide
 beth-if
+beth-inside
+beth-html-inside
 ```
 
 How do I programatically detect Beth was initalized sucessfully?
