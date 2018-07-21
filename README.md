@@ -32,6 +32,8 @@ beth-disable
 beth-each
 beth-hide
 beth-if
+beth-include
+beth-include-async
 beth-inside
 beth-html-inside
 ```

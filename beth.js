@@ -153,6 +153,27 @@ class Beth {
 				console.warn("Beth: Variable not defined", e);
 			}
 		});
+
+		$("beth-include, beth-include-async").each(function() {
+			try {
+				var element = $(this);
+				var url = element.attr('url');
+				var async = element.prop("tagName") === 'beth-include-async' ? true : false;
+				$.get({
+					async: async,
+					url: url,
+					error: function(xhr, status, e) {
+						console.warn("Beth: Error downloading include data: Server responded with status code ["+xhr.status+"] "+xhr.statusText);
+					},
+					success: function(data, status, xhr) {
+						element.replaceWith(xhr.responseText);
+					}
+				});				
+			} catch(e) {
+				$(this).removeAttr('beth-bind');
+				console.warn("Beth: Error downloading include data", e);
+			}
+		});
 	}
 
 	static _bindDirectives() {
