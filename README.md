@@ -2,10 +2,10 @@
 This JQuery based micro-framework implements "angular-like" utilities for your views.
 
 ## What's the point of this?
-If you always used jQuery to manipulate the DOM and can do anything with it, but knows how bad can it be, this is for you.
-If you used AngularJS and loved it but also hated it this is also for you.
+If you always used jQuery to manipulate the DOM and can do anything with it, but knows how bad it can get, this is for you.
+If you used AngularJS and loved it AND hated it, this is also for you.
 
-No Angular routing or scope, controllers bullshit. Do stuff your way elimitaing only the DOM direct manipulation.
+No Angular routing or scope, controllers bullshit. Do stuff the simple js way elimitaing only the DOM direct manipulation.
 
 Less is more!
 
