@@ -1,19 +1,18 @@
 # beth.js
-This JQuery based micro-framework implements "angular-like" utilities for your views.
+This JQuery based tool implements "angular-like" utilities for your front-end.
 
 ## What's the point of this?
 If you always used jQuery to manipulate the DOM and can do anything with it, but knows how bad it can get, this is for you.
-If you used AngularJS and loved it AND hated it, this is also for you.
 
-No Angular routing or scope, controllers bullshit. Do stuff the simple js way elimitaing only the DOM direct manipulation.
+No bullshit. Just do your stuff the simple way, eliminating direct DOM manipulation.
 
-Less is more!
+Less sometimes is more!
 
 ## Prerequisites
 - jQuery
 
 ## Getting Started
-Download the beth.js or beth.min.js file and include in your page. 
+Download the beth.js or beth.min.js file and include in your page anywhere after jQuery is loaded. 
 
 To display a value that is dinamically updated on your page just put an expression on your HTML page inside double brackets like so:
 ```
