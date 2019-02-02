@@ -21,7 +21,7 @@
     String in the above input => {{instance.tests.string}}
     <br>
     <br>
-    Comboboxes! 
+    Comboboxes!
     <select beth-bind="instance.tests.select" beth-change="instance.selectChanged(instance.tests.select)">
       <option beth-each="instance.tests.options => $value" value="{$value.value}">{$value.text}</option>
     </select>
@@ -56,6 +56,11 @@
 
     <p>Sync Partial => <beth-include url="partials/partial_example.html" /></p>
     <p>Async Partial => <beth-include-async url="partials/partial_example.html" /></p>
+
+    <br><br>
+
+    <p beth-each="test_array => $test">{$test}</p>
+    <button beth-click="test_array.push('New element '+test_array.length)">Add element to array</button>
   </body>
   <script src="MyTestModel.class.js"></script>
   <script src="formcontroller.js"></script>

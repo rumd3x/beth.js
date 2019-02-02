@@ -308,6 +308,16 @@ class Beth {
 					}
 					$("[beth-loop-id='"+uniqueId+"']").remove();
 
+
+					if (source === undefined) {
+						source = [];
+					}
+
+					if (source.length === 0) {
+						$(this).parent().hide();
+						console.log('hey');
+					}
+
 					for (let index = 0; index < source.length; index++) {
 						const element = source[index];
 						var clone = $(this).clone().removeAttr('beth-each').removeAttr('beth-id').attr('beth-loop-id', uniqueId).unwrap();
