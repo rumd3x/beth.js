@@ -12,7 +12,7 @@ Less sometimes is more!
 - jQuery
 
 ## Getting Started
-Download the beth.js or beth.min.js file and include in your page anywhere after jQuery is loaded. 
+Download the beth.js or beth.min.js file and include in your page anywhere after jQuery is loaded.
 
 To display a value that is dinamically updated on your page just put an expression on your HTML page inside double brackets like so:
 ```
@@ -30,6 +30,7 @@ beth-default
 beth-disable
 beth-each
 beth-hide
+beth-show
 beth-if
 beth-include
 beth-include-async

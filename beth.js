@@ -1,7 +1,7 @@
 $(document, window, undefined).ready(function() {
 	Beth._refreshInterval = 70;
 	Beth._init();
-});	
+});
 
 class Beth {
 
@@ -10,7 +10,7 @@ class Beth {
 	}
 
 	static _init() {
-		Beth._initialized = false;		
+		Beth._initialized = false;
 		Beth.loops = {};
 		Beth._initDynamicHtml();
 		Beth._bindDirectives();
@@ -27,14 +27,14 @@ class Beth {
 		if (matches == null) {
 			matches = [];
 		}
-		for(var i = 0, length1 = matches.length; i < length1; i++) {			
+		for(var i = 0, length1 = matches.length; i < length1; i++) {
 			var varvalue;
 			var current_matched_var = matches[i];
 			var varname = $.trim(Beth._extractTextBetween(current_matched_var, "{{", "}}"));
 			varvalue = Beth._parseValue(varname);
 			newHtml = oldHtml;
 			if (varvalue !== undefined) {
-				Beth.binds.push(varname);				
+				Beth.binds.push(varname);
 				newHtml = oldHtml.replace(current_matched_var, '<beth data-bind="'+ (Beth.binds.length-1) +'">'+Beth._unescapeReal(varvalue)+"</beth>");
 			} else {
 				if ($('[beth-bind="'+varname+'"][beth-default]').length > 0) {
@@ -122,10 +122,10 @@ class Beth {
 		});
 
 		$("textarea[beth-bind], input[beth-bind][type!='radio'][type!='checkbox'], select[beth-bind]").each(function() {
-			try {				
+			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
-				$(this).val(Beth._unescapeReal(eval($(this).attr('beth-bind'))));				
+				$(this).val(Beth._unescapeReal(eval($(this).attr('beth-bind'))));
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -147,7 +147,7 @@ class Beth {
 			try {
 				var bethvar_name = $(this).attr('beth-bind');
 				Beth._declareVar(bethvar_name, $(this).attr('beth-default'));
-				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);				
+				$(this).prop('checked', eval($(this).attr('beth-bind')) ? true : false);
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Variable not defined", e);
@@ -168,7 +168,7 @@ class Beth {
 					success: function(data, status, xhr) {
 						element.replaceWith(xhr.responseText);
 					}
-				});				
+				});
 			} catch(e) {
 				$(this).removeAttr('beth-bind');
 				console.warn("Beth: Error downloading include data", e);
@@ -183,11 +183,25 @@ class Beth {
 				if (hide == true) {
 					$(this).hide();
 				} else {
-					$(this).show();					
+					$(this).show();
 				}
 			} catch(e) {
 				$(this).removeAttr('beth-hide');
 				console.warn("Beth: Invalid expression inside 'Hide' directive", e);
+			}
+		});
+
+		$("[beth-show]").each(function() {
+			try {
+				var show = eval($(this).attr('beth-show'));
+				if (show == true) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			} catch(e) {
+				$(this).removeAttr('beth-show');
+				console.warn("Beth: Invalid expression inside 'Show' directive", e);
 			}
 		});
 
@@ -197,7 +211,7 @@ class Beth {
 				if (disable == true) {
 					$(this).prop('disabled', true);
 				} else {
-					$(this).prop('disabled', false);				
+					$(this).prop('disabled', false);
 				}
 			} catch(e) {
 				$(this).removeAttr('beth-disable');
@@ -209,14 +223,14 @@ class Beth {
 			try {
 				var result = eval($(this).attr('beth-if'));
 				if (result != true) {
-					$(this).remove();				
+					$(this).remove();
 				}
 			} catch(e) {
 				console.warn("Beth: Invalid expression inside 'If' directive", e);
 			}
 			$(this).removeAttr('beth-if');
 		});
-		
+
 		$("[beth-click]").each(function() {
 			$(this).off('click');
 			$(this).on('click', function() {
@@ -243,7 +257,7 @@ class Beth {
 			} catch (e) {
 				console.warn("Beth: Invalid expression inside 'Html-inside' directive", e);
 			}
-			
+
 			if ($(this).html() !== beth_inside_string_var) {
 				$(this).html(beth_inside_string_var);
 			}
@@ -262,8 +276,8 @@ class Beth {
 				console.warn("Beth: Invalid expression inside 'Class' directive", e);
 			}
 		})
-		
-		$("[beth-each]").each(function() {		
+
+		$("[beth-each]").each(function() {
 			var newLoop = false;
 			if ($(this).attr('beth-id') === undefined) {
 				do {
@@ -279,42 +293,43 @@ class Beth {
 				var loopVarName = exploded[1].trim();
 				var source = eval(exploded[0].trim());
 				var match = false;
-				if (newLoop) {								
+				if (newLoop) {
 					Beth.loops[uniqueId] = jQuery.extend(true, [], source);
-				} else {		
+				} else {
 					if (JSON.stringify(Beth.loops[uniqueId]) === JSON.stringify(source)) {
 						match = true;
 					} else {
 						Beth.loops[uniqueId] = jQuery.extend(true, [], source);
 					}
-				}				
-				if (!match) {					
+				}
+				if (!match) {
 					if ($(this).parent().prop('tagName') != "BETH-IT") {
 						$(this).wrap('<beth-it></beth-it>');
 					}
 					$("[beth-loop-id='"+uniqueId+"']").remove();
+
 					for (let index = 0; index < source.length; index++) {
 						const element = source[index];
 						var clone = $(this).clone().removeAttr('beth-each').removeAttr('beth-id').attr('beth-loop-id', uniqueId).unwrap();
 						var cloneHTML = clone.prop('outerHTML');
 						var newHtml = cloneHTML.replace(/\{(.*?)\$index(.*?)\}/g, index);
-						var matches = newHtml.match(eval('/\{(.*?)\\'+loopVarName+'(.*?)\}/g'));							
+						var matches = newHtml.match(eval('/\{(.*?)\\'+loopVarName+'(.*?)\}/g'));
 						if (matches === null) {
 							matches = [];
-						}					
+						}
 						for (let j = 0; j < matches.length; j++) {
-							const curr_match = matches[j];			
+							const curr_match = matches[j];
 							var realVar = Beth._extractTextBetween(curr_match, '{', '}');
-							realVar = realVar.replace(loopVarName, 'element');		
+							realVar = realVar.replace(loopVarName, 'element');
 							newHtml = newHtml.replace(curr_match, eval(realVar));
-						}	
+						}
 						clone.remove();
 						$(this).parent().hide().before(newHtml);
 					}
 				}
 			} catch (e) {
 				$(this).remove();
-				console.warn("Beth: Invalid expression inside 'Each' directive", e);				
+				console.warn("Beth: Invalid expression inside 'Each' directive", e);
 			}
 		});
 
@@ -332,8 +347,8 @@ class Beth {
 
 		return text;
 	}
-	
-	static _watchVar(varname) {		
+
+	static _watchVar(varname) {
 		if (varname.indexOf('.') > -1) {
 			var varname_arr = varname.split('.');
 			var prop = varname_arr.pop();
@@ -342,10 +357,10 @@ class Beth {
 		} else {
 			var prop = varname;
 			var realObj = window;
-		}	
+		}
 
-		realObj.watch(prop, function(param, oldVal, newVal) {			
-			realObj.unwatch(param);			
+		realObj.watch(prop, function(param, oldVal, newVal) {
+			realObj.unwatch(param);
 			$("[beth-bind='"+varname+"']").each(function() {
 				if ($(this).prop('type') == 'radio') {
 					$(this).prop('checked', newVal == $(this).val());
@@ -364,7 +379,7 @@ class Beth {
 			}, Beth._refreshInterval);
 		});
 	}
-	
+
 	static _triggerEvent(selector, event) {
 		var callback = selector.attr('beth-'+event);
 		if (callback !== undefined && Beth._initialized) {
@@ -379,12 +394,12 @@ class Beth {
 	static _unescapeReal(escape) {
 		var escaped = escape;
 		while (escaped !== unescape(escaped)) {
-			escaped = unescape(escaped);						
+			escaped = unescape(escaped);
 		}
 		return escaped;
 	}
-	
-	static _declareVar(varname, varvalue = null) {	
+
+	static _declareVar(varname, varvalue = null) {
 		Beth._watchVar(varname);
 		if (!Beth._isVarDefined(varname)) {
 			varvalue = Beth._parseValue(varvalue);
@@ -401,7 +416,7 @@ class Beth {
 			return false;
 		}
 	}
-	
+
 	static _isVarDefined(varname) {
 		var valid = true;
 		try {
@@ -479,7 +494,7 @@ if (!Object.prototype.watch) {
                 };
 
 			if (delete this[prop]) { // can't watch constants
-			
+
                 Object.defineProperty(this, prop, {
                     get: getter,
                     set: setter,
